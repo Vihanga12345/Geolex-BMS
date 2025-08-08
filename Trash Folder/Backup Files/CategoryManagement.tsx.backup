@@ -1,0 +1,577 @@
+import React, { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Search, Plus, Save, ArrowLeft, Edit, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+import MultiSelector from '@/components/ui/MultiSelector';
+import { supabase } from '@/integrations/supabase/client';
+
+interface Category {
+  id: string;
+  name: string;
+  attributes: string[];
+  created_at: string;
+  last_modified: string;
+}
+
+interface CategoryManagementProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCategoryCreated?: (categoryId: string, categoryName: string) => void;
+}
+
+const CategoryManagement: React.FC<CategoryManagementProps> = ({
+  open,
+  onOpenChange,
+  onCategoryCreated,
+}) => {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [editingAttributes, setEditingAttributes] = useState<string[]>([]);
+  const [editingName, setEditingName] = useState('');
+  const [isEditingName, setIsEditingName] = useState(false);
+
+const CategoryManagement: React.FC<CategoryManagementProps> = ({
+  open,
+  onOpenChange,
+  onCategoryCreated,
+}) => {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [editingAttributes, setEditingAttributes] = useState<string[]>([]);
+  const [editingName, setEditingName] = useState('');
+  const [isEditingName, setIsEditingName] = useState(false);
+
+  // Fetch categories from database
+  const fetchCategories = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('category')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+
+      const formattedCategories: Category[] = (data || []).map(cat => ({
+        id: cat.id,
+        name: cat.name,
+        attributes: Array.isArray(cat.attributes) ? cat.attributes as string[] : [],
+        created_at: cat.created_at,
+        last_modified: cat.last_modified
+      }));
+
+      setCategories(formattedCategories);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      toast.error('Failed to fetch categories');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Add new category
+  const addCategory = async () => {
+    if (!newCategoryName.trim()) {
+      toast.error('Category name is required');
+      return;
+    }
+
+    // Check for duplicates
+    if (categories.some(cat => cat.name.toLowerCase() === newCategoryName.toLowerCase())) {
+      toast.error('Category name already exists');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { data, error } = await supabase
+        .from('category')
+        .insert([
+          { 
+            name: newCategoryName.trim(),
+            attributes: []
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const newCategory: Category = {
+        id: data.id,
+        name: data.name,
+        attributes: Array.isArray(data.attributes) ? data.attributes as string[] : [],
+        created_at: data.created_at,
+        last_modified: data.last_modified
+      };
+
+      setCategories([...categories, newCategory]);
+      setNewCategoryName('');
+      setShowAddCategory(false);
+      toast.success('Category added successfully');
+      
+      // Notify parent component about new category
+      if (onCategoryCreated) {
+        onCategoryCreated(newCategory.id, newCategory.name);
+      }
+    } catch (error) {
+      console.error('Error adding category:', error);
+      toast.error('Failed to add category');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Update category attributes
+  const updateCategoryAttributes = async () => {
+    if (!selectedCategory) return;
+
+    const confirmed = window.confirm('Are you sure you want to save the changes to this category?');
+    if (!confirmed) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('category')
+        .update({ 
+          attributes: editingAttributes,
+          last_modified: new Date().toISOString()
+        })
+        .eq('id', selectedCategory.id);
+
+      if (error) throw error;
+
+      // Update local state
+      const updatedCategories = categories.map(cat => 
+        cat.id === selectedCategory.id 
+          ? { ...cat, attributes: editingAttributes, last_modified: new Date().toISOString() }
+          : cat
+      );
+      setCategories(updatedCategories);
+      setSelectedCategory({
+        ...selectedCategory,
+        attributes: editingAttributes,
+        last_modified: new Date().toISOString()
+      });
+
+      toast.success('Category attributes updated successfully');
+    } catch (error) {
+      console.error('Error updating category:', error);
+      toast.error('Failed to update category attributes');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Update category name
+  const updateCategoryName = async () => {
+    if (!selectedCategory || !editingName.trim()) return;
+
+    // Check for duplicates
+    if (categories.some(cat => cat.id !== selectedCategory.id && cat.name.toLowerCase() === editingName.toLowerCase())) {
+      toast.error('Category name already exists');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('category')
+        .update({ 
+          name: editingName.trim(),
+          last_modified: new Date().toISOString()
+        })
+        .eq('id', selectedCategory.id);
+
+      if (error) throw error;
+
+      // Update local state
+      const updatedCategories = categories.map(cat => 
+        cat.id === selectedCategory.id 
+          ? { ...cat, name: editingName.trim(), last_modified: new Date().toISOString() }
+          : cat
+      );
+      setCategories(updatedCategories);
+      setSelectedCategory({
+        ...selectedCategory,
+        name: editingName.trim(),
+        last_modified: new Date().toISOString()
+      });
+
+      setIsEditingName(false);
+      toast.success('Category name updated successfully');
+    } catch (error) {
+      console.error('Error updating category name:', error);
+      toast.error('Failed to update category name');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Check if category can be deleted (not used by any inventory items)
+  const checkCategoryUsage = async (categoryId: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from('inventory_items')
+        .select('id')
+        .eq('category_id', categoryId)
+        .limit(1);
+
+      if (error) throw error;
+      return (data?.length || 0) > 0;
+    } catch (error) {
+      console.error('Error checking category usage:', error);
+      return true; // Assume it's being used to be safe
+    }
+  };
+
+  // Delete category
+  const deleteCategory = async (categoryId: string, categoryName: string) => {
+    // Check if category is being used
+    const isInUse = await checkCategoryUsage(categoryId);
+    if (isInUse) {
+      toast.error('Cannot delete category. It is currently being used by inventory items.');
+      return;
+    }
+
+    const confirmed = window.confirm(`Are you sure you want to delete the category "${categoryName}"? This action cannot be undone.`);
+    if (!confirmed) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('category')
+        .delete()
+        .eq('id', categoryId);
+
+      if (error) throw error;
+
+      // Update local state
+      const updatedCategories = categories.filter(cat => cat.id !== categoryId);
+      setCategories(updatedCategories);
+      
+      // If we're currently editing this category, go back to list
+      if (selectedCategory?.id === categoryId) {
+        setSelectedCategory(null);
+        setEditingAttributes([]);
+      }
+
+      toast.success('Category deleted successfully');
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      toast.error('Failed to delete category');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Filter categories based on search term
+  const filteredCategories = categories.filter(category =>
+    category.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Handle category selection
+  const handleCategorySelect = (category: Category) => {
+    setSelectedCategory(category);
+    setEditingAttributes([...category.attributes]);
+    setEditingName(category.name);
+    setIsEditingName(false);
+  };
+
+  // Handle back to list
+  const handleBackToList = () => {
+    setSelectedCategory(null);
+    setEditingAttributes([]);
+    setEditingName('');
+    setIsEditingName(false);
+  };
+
+  // Fetch categories when modal opens
+  useEffect(() => {
+    if (open) {
+      fetchCategories();
+    }
+  }, [open]);
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!open) {
+      setSelectedCategory(null);
+      setEditingAttributes([]);
+      setEditingName('');
+      setIsEditingName(false);
+      setSearchTerm('');
+      setNewCategoryName('');
+      setShowAddCategory(false);
+    }
+  }, [open]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            {selectedCategory && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleBackToList}
+                className="mr-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            )}
+            {selectedCategory ? `Edit Category: ${selectedCategory.name}` : 'Category Management'}
+          </DialogTitle>
+        </DialogHeader>
+
+        {!selectedCategory ? (
+          // Category List View
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="relative w-full sm:w-auto">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search categories..."
+                  className="pl-8 w-full sm:w-[250px]"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <Button onClick={() => setShowAddCategory(true)} size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Category
+              </Button>
+            </div>
+
+            {showAddCategory && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Add New Category</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Category name..."
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && addCategory()}
+                    />
+                    <Button onClick={addCategory} disabled={saving}>
+                      {saving ? 'Adding...' : 'Add'}
+                    </Button>
+                    <Button variant="outline" onClick={() => setShowAddCategory(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <Card>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Category Name</TableHead>
+                      <TableHead>Attributes Count</TableHead>
+                      <TableHead>Created Date</TableHead>
+                      <TableHead>Last Modified</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {loading ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                          Loading categories...
+                        </TableCell>
+                      </TableRow>
+                    ) : filteredCategories.length > 0 ? (
+                      filteredCategories.map((category) => (
+                        <TableRow 
+                          key={category.id} 
+                          className="hover:bg-muted/50"
+                        >
+                          <TableCell 
+                            className="font-medium cursor-pointer"
+                            onClick={() => handleCategorySelect(category)}
+                          >
+                            {category.name}
+                          </TableCell>
+                          <TableCell 
+                            className="cursor-pointer"
+                            onClick={() => handleCategorySelect(category)}
+                          >
+                            {category.attributes.length}
+                          </TableCell>
+                          <TableCell 
+                            className="cursor-pointer"
+                            onClick={() => handleCategorySelect(category)}
+                          >
+                            {new Date(category.created_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell 
+                            className="cursor-pointer"
+                            onClick={() => handleCategorySelect(category)}
+                          >
+                            {new Date(category.last_modified).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCategorySelect(category);
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteCategory(category.id, category.name);
+                                }}
+                                disabled={saving}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                          No categories found.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          // Category Detail/Edit View
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Category Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Name</label>
+                    {isEditingName ? (
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') updateCategoryName();
+                            if (e.key === 'Escape') {
+                              setIsEditingName(false);
+                              setEditingName(selectedCategory.name);
+                            }
+                          }}
+                          autoFocus
+                        />
+                        <Button size="sm" onClick={updateCategoryName} disabled={saving}>
+                          <Save className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => {
+                            setIsEditingName(false);
+                            setEditingName(selectedCategory.name);
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className="text-lg font-semibold">{selectedCategory.name}</p>
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          onClick={() => setIsEditingName(true)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Attributes Count</label>
+                    <p className="text-lg">{selectedCategory.attributes.length}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Created Date</label>
+                    <p className="text-sm text-gray-600">
+                      {new Date(selectedCategory.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Last Modified</label>
+                    <p className="text-sm text-gray-600">
+                      {new Date(selectedCategory.last_modified).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Edit Attributes</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <MultiSelector
+                  placeholder="Type attribute name and press Enter..."
+                  selectedItems={editingAttributes}
+                  onSelectionChange={setEditingAttributes}
+                  allowDuplicates={false}
+                  maxItems={20}
+                />
+                
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={handleBackToList}>
+                    Cancel
+                  </Button>
+                  <Button onClick={updateCategoryAttributes} disabled={saving}>
+                    <Save className="mr-2 h-4 w-4" />
+                    {saving ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default CategoryManagement;
