@@ -390,10 +390,21 @@ export const useSales = () => {
 
   const updateSalesOrder = async (id: string, updates: Partial<SalesOrder>) => {
     try {
+      // Map UI statuses to database-allowed statuses
+      const statusMapping: Record<string, string> = {
+        completed: 'delivered',
+        processing: 'processing',
+        pending: 'pending',
+        cancelled: 'cancelled',
+        delivered: 'delivered'
+      };
+
+      const safeStatus = updates.status ? statusMapping[updates.status as string] as SalesOrderStatus : undefined;
+
       const { error } = await supabase
         .from('sales_orders')
         .update({
-          status: updates.status,
+          status: safeStatus,
           payment_method: updates.paymentMethod,
           notes: updates.notes
         })

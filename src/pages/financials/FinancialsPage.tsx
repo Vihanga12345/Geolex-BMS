@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { useERPAuth } from '@/contexts/ERPAuthContext';
-import { FileText, BarChart } from 'lucide-react';
+import { FileText } from 'lucide-react';
 
 const FinancialsPage = () => {
   const navigate = useNavigate();
@@ -16,12 +16,6 @@ const FinancialsPage = () => {
       description: 'Record and track all financial transactions',
       icon: <FileText className="h-6 w-6 text-gray-500" />,
       path: '/financials/transactions'
-    },
-    {
-      title: 'Profit & Loss',
-      description: 'View profit and loss statements',
-      icon: <BarChart className="h-6 w-6 text-gray-500" />,
-      path: '/financials/reports/profit-loss'
     }
   ];
 

@@ -3,7 +3,6 @@ import ProtectedRoute from "./ProtectedRoute";
 import FinancialsPage from "@/pages/financials/FinancialsPage";
 import TransactionList from "@/pages/financials/transactions/TransactionList";
 import CreateTransaction from "@/pages/financials/transactions/CreateTransaction";
-import ProfitLossPage from "@/pages/financials/reports/ProfitLossPage";
 import ExpensesPage from "@/pages/financials/expenses/ExpensesPage";
 
 const FinancialsRoutes = (
@@ -28,11 +27,6 @@ const FinancialsRoutes = (
         <ExpensesPage />
       </ProtectedRoute>
     } />
-    <Route path="reports/profit-loss" element={
-      <ProtectedRoute>
-        <ProfitLossPage />
-      </ProtectedRoute>
-    } />
   </Route>
 );
 
@@ -55,8 +49,5 @@ export const financialsRoutes = [
     path: '/financials/expenses',
     element: <ExpensesPage />
   },
-  {
-    path: '/financials/reports/profit-loss',
-    element: <ProfitLossPage />
-  }
+  
 ];

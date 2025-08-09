@@ -83,6 +83,11 @@ export const salesRoutes = [
     element: <SalesOrderList />
   },
   {
+    path: '/sales/orders/new',
+    element: <CreateSalesOrder />
+  },
+  // Backward-compat: support old path
+  {
     path: '/sales/orders/create',
     element: <CreateSalesOrder />
   },
@@ -98,6 +103,11 @@ export const salesRoutes = [
     path: '/sales/customers',
     element: <CustomerList />
   },
+  {
+    path: '/sales/customers/new',
+    element: <CustomerForm />
+  },
+  // Backward-compat: support old path
   {
     path: '/sales/customers/create',
     element: <CustomerForm />

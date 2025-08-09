@@ -19,7 +19,7 @@ import { Separator } from '@/components/ui/separator';
 const SalesReturnsPage = () => {
   const navigate = useNavigate();
   const { salesOrders, fetchSalesOrders, updateSalesOrder } = useSales();
-  const { items } = useInventory();
+  const { increaseStock } = useInventory();
   const { addTransaction } = useFinancials();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,7 +33,7 @@ const SalesReturnsPage = () => {
   }, [fetchSalesOrders]);
 
   const filteredOrders = salesOrders.filter(order =>
-    order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) && order.status === 'completed'
+    order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleOrderSelect = (order) => {
@@ -42,7 +42,7 @@ const SalesReturnsPage = () => {
   };
 
   const handleItemSelect = (item) => {
-    const existingItemIndex = returnItems.findIndex(ri => ri.itemId === item.itemId);
+    const existingItemIndex = returnItems.findIndex(ri => ri.itemId === item.productId);
 
     if (existingItemIndex > -1) {
       // Item already selected, remove it
@@ -51,7 +51,7 @@ const SalesReturnsPage = () => {
       setReturnItems(updatedReturnItems);
     } else {
       // Item not selected, add it with a default quantity of 1
-      setReturnItems([...returnItems, { itemId: item.itemId, quantity: 1, unitPrice: item.unitPrice, product: item.product }]);
+      setReturnItems([...returnItems, { itemId: item.productId, quantity: 1, unitPrice: item.unitPrice, product: item.product }]);
     }
   };
 
@@ -88,17 +88,17 @@ const SalesReturnsPage = () => {
 
     setIsProcessing(true);
     try {
-      // Process the return logic
-      const updatedItems = selectedOrder.items.map(item => {
-        const returnedItem = returnItems.find(ri => ri.itemId === item.productId);
-        if (returnedItem) {
-          return { ...item, quantity: item.quantity - returnedItem.quantity };
+      // Increase stock for each returned item
+      for (const ri of returnItems) {
+        try {
+          await increaseStock(ri.itemId, ri.quantity, 'return', `Sales return for Order #${selectedOrder.orderNumber}`);
+        } catch (stockErr) {
+          console.error('Stock increase failed for item', ri.itemId, stockErr);
         }
-        return item;
-      });
+      }
 
       // Update the sales order status
-      await updateSalesOrder(selectedOrder.id, { status: 'returned' as SalesOrderStatus });
+      await updateSalesOrder(selectedOrder.id, { status: 'delivered' as SalesOrderStatus });
 
       // Create a financial transaction record with all required parameters
       await addTransaction(

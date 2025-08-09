@@ -9,7 +9,6 @@ import {
   ShoppingCart, 
   Users, 
   Package, 
-  Receipt, 
   RotateCcw,
   ShoppingBag
 } from 'lucide-react';
@@ -66,14 +65,6 @@ const SalesPage = () => {
       path: '/sales/returns',
       color: 'bg-red-500',
       count: 0
-    },
-    {
-      title: 'Sales Reports',
-      description: 'View detailed sales analytics',
-      icon: Receipt,
-      path: '/sales/reports',
-      color: 'bg-indigo-500',
-      count: summary.completedOrders
     }
   ];
 

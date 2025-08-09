@@ -128,43 +128,7 @@ const SettingsPage = () => {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Language</CardTitle>
-                <CardDescription>Set your preferred language</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Current Language</Label>
-                    <p className="text-sm text-muted-foreground">
-                      English
-                    </p>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        Change Language
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      {languages.map((lang) => (
-                        <DropdownMenuItem
-                          key={lang.code}
-                          onClick={() => handleLanguageChange(lang.code as LanguageType)}
-                          className="flex items-center justify-between"
-                        >
-                          <span>{lang.label}</span>
-                          {'en' === lang.code && (
-                            <Check className="h-4 w-4" />
-                          )}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Language tile removed per requirements */}
           </div>
         </div>
       </div>

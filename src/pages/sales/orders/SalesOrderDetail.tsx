@@ -150,7 +150,7 @@ const SalesOrderDetail = () => {
     switch (status) {
       case 'pending': return 'secondary';
       case 'processing': return 'default';
-      case 'completed': return 'default';
+      case 'delivered': return 'default';
       case 'cancelled': return 'destructive';
       default: return 'outline';
     }
@@ -187,17 +187,17 @@ const SalesOrderDetail = () => {
                 Print
               </Button>
               
-              {order.status !== 'completed' && order.status !== 'cancelled' && (
+                  {order.status !== 'delivered' && order.status !== 'cancelled' && (
                 <Button
                   size="sm"
                   className="gap-2"
                   onClick={() => {
-                    setNewStatus('completed');
+                    setNewStatus('delivered');
                     handleStatusChange();
                   }}
                 >
-                  <CheckCircle2 className="h-4 w-4" />
-                  Complete Order
+                    <CheckCircle2 className="h-4 w-4" />
+                    Mark as Delivered
                 </Button>
               )}
               
@@ -300,10 +300,10 @@ const SalesOrderDetail = () => {
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="processing">Processing</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                   <SelectItem value="pending">Pending</SelectItem>
+                   <SelectItem value="processing">Processing</SelectItem>
+                   <SelectItem value="delivered">Delivered</SelectItem>
+                   <SelectItem value="cancelled">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
                   

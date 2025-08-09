@@ -6,7 +6,6 @@ import ItemForm from "@/pages/inventory/items/ItemForm";
 import StockVisibility from "@/pages/inventory/stock/StockVisibility";
 import Adjustments from "@/pages/inventory/adjustments/Adjustments";
 import GoodsReceiptPage from "@/pages/inventory/goods-receipt/GoodsReceiptPage";
-import ReturnsPage from "@/pages/inventory/returns/ReturnsPage";
 
 const InventoryRoutes = (
   <>
@@ -58,11 +57,6 @@ const InventoryRoutes = (
       </ProtectedRoute>
     } />
 
-    <Route path="/inventory/returns" element={
-      <ProtectedRoute>
-        <ReturnsPage />
-      </ProtectedRoute>
-    } />
   </>
 );
 
@@ -101,8 +95,5 @@ export const inventoryRoutes = [
     path: '/inventory/goods-receipt',
     element: <GoodsReceiptPage />
   },
-  {
-    path: '/inventory/returns',
-    element: <ReturnsPage />
-  }
+  
 ];

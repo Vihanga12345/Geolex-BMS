@@ -3,7 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Package, Warehouse, RefreshCw, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
+import { Package, Warehouse, RefreshCw, ArrowDownToLine } from 'lucide-react';
 import { useERPAuth } from '@/contexts/ERPAuthContext';
 
 const InventoryPage = () => {
@@ -30,13 +30,6 @@ const InventoryPage = () => {
       description: 'Record received goods and update inventory',
       icon: <ArrowDownToLine className="h-12 w-12 text-primary/70" />,
       path: '/inventory/goods-receipt',
-      roles: ['manager', 'employee']
-    },
-    {
-      title: 'Returns/Refunds',
-      description: 'Process returns and update inventory',
-      icon: <ArrowUpFromLine className="h-12 w-12 text-primary/70" />,
-      path: '/inventory/returns',
       roles: ['manager', 'employee']
     },
     {

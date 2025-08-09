@@ -302,4 +302,5 @@ const ProfitLossPage = () => {
   );
 };
 
-export default ProfitLossPage;
+// Deprecated page retained as no-op to avoid import errors during incremental builds.
+export default () => null;
